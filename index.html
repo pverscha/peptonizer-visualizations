@@ -1,0 +1,52 @@
+<html>
+    <head>
+        <script src="https://cdn.jsdelivr.net/npm/unipept-visualizations@2.1.0/dist/unipept-visualizations.js"></script>
+    </head>
+    <body>
+        <div id="d3Treeview"></div>
+        <script>
+            const sanitizeNode = function(node) {
+                for (const child of node.children || []) {
+                    sanitizeNode(child);
+                }
+
+                node.count = node.data.count;
+                node.self_count = node.data.self_count;
+            }
+
+            const ncbiProbabilities = {
+                "817": 0.3,
+                "329854": 0.5,
+                "1099853": 0.7
+            };
+
+            fetch(
+                "http://selma.ugent.be/api/v2/taxa2tree.json",
+                {
+                    method: "POST",
+                    mode: "cors",
+                    headers: {
+                        "Content-Type": "application/json",
+                    },
+                    body: JSON.stringify({
+                        counts: ncbiProbabilities
+                    })
+                }
+            ).then(async response => {
+                const taxonomy = await response.json();
+                sanitizeNode(taxonomy);
+
+                const treeview = new UnipeptVisualizations.Treeview(
+                    document.getElementById("d3Treeview"),
+                    taxonomy,
+                    {
+                        width: 900,
+                        height: 600
+                    }
+                );
+
+                console.log(treeview);
+            });
+        </script>
+    </body>
+</html>
