@@ -86,7 +86,7 @@ await page.setContent(
 `
 <html>
     <head>
-        <script src="https://cdn.jsdelivr.net/npm/unipept-visualizations@2.1.1/dist/unipept-visualizations.js"></script>
+        <script src="https://cdn.jsdelivr.net/npm/unipept-visualizations@2.1.2/dist/unipept-visualizations.js"></script>
     </head>
     <body>
         <div id="d3Treeview"></div>
@@ -116,48 +116,27 @@ const result = await page.evaluate(async () => {
     const element = document.getElementById("d3Treeview");
     const dimensions = JSON.parse(await getDimensions());
 
-    const ranks = [
-        "no rank",
-        "superkingdom",
-        "kingdom",
-        "subkingdom",
-        "superphylum",
-        "phylum",
-        "subphylum",
-        "superclass",
-        "class",
-        "subclass",
-        "infraclass",
-        "superorder",
-        "order",
-        "suborder",
-        "infraorder",
-        "parvorder",
-        "superfamily",
-        "family",
-        "subfamily",
-        "tribe",
-        "subtribe",
-        "genus",
-        "subgenus",
-        "species group",
-        "species subgroup",
-        "species",
-        "subspecies",
-        "varietas",
-        "forma"
-    ];
+    const colorScale = ["#1F77B4", "#FF7F0E", "#2CA02C", "#D62728", "#9467BD", "#8C564B", "#E377C2", "#7F7F7F", "#BCBD22", "#17BECF"];
+    let colorScaleStartIdx = 0;
+    let previousLevel = -1;
+    let colorScaleIdxLevel = 0;
+    const colorProvider = (node, currentLevel) => {
+        if (currentLevel < previousLevel) {
+            colorScaleStartIdx = colorScaleIdxLevel;
+            colorScaleIdxLevel = colorScaleStartIdx;
+            return colorScale[colorScaleIdxLevel];
+        } else if (currentLevel > previousLevel) {
+            previousLevel = currentLevel;
+            return colorScale[colorScaleIdxLevel];
+        } else {
+            previousLevel = currentLevel;
+            return colorScale[colorScaleIdxLevel++];
+        }
+    }
 
-    // const colorProvider = (node) => {
-    //     const rankIdx = ranks.indexOf(node.data.rank);
-    //     if (rankIdx < 5) {
-    //         node.setColor("#CCCCCC");
-    //     } else if (rankIdx === 5) {
-    //         const scale = ["#FF0000", "#00FF00", "#0000FF"];
-    //         node.setColor(scale[node.id % 3]);
-    //     }
-    // };
-
+    const nodeStrokeColorProvider = (node) => {
+        return "#787878";
+    }
 
     const treeview = new UnipeptVisualizations.Treeview(
         element,
@@ -165,8 +144,9 @@ const result = await page.evaluate(async () => {
         {
             width: JSON.parse(dimensions.width),
             height: JSON.parse(dimensions.height),
-            colorProviderLevels: 2,
-            // colorProvider: colorProvider,
+            colorProviderLevels: 3,
+            colorProvider: colorProvider,
+            nodeStrokeColor: nodeStrokeColorProvider,
             minNodeSize: 2,
             maxNodeSize: 20,
             levelsToExpand: 30,
